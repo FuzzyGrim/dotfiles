@@ -1,74 +1,117 @@
+/* ALWAYS SHOW TAB CLOSE BUTTON ON HOVER AND NEVER OTHERWISE */
+/* Source file https://github.com/MrOtherGuy/firefox-csshacks/tree/master/chrome/tab_close_button_always_on_hover.css made available under Mozilla Public License v. 2.0
+See the above repository for updates as well as full license text. */
+
 /* Always show tab close button on hover and never otherwise */
-.tabbrowser-tab:not([pinned]):not(:hover) .tab-close-button { visibility: collapse !important; }
+.tabbrowser-tab .tab-close-button{
+  display:none;
+}
+.tabbrowser-tab:not([pinned]):hover .tab-close-button{
+  display: flex !important;
+  align-items: center;
+}
 
-.tabbrowser-tab:not([pinned]):hover .tab-close-button { visibility: visible !important; display: block !important; }
 
-
-
-/* Show a number before tab text*/
-
+/* SHOW A NUMBER BEFORE TAB TEXT*/
+/* Source file https://github.com/MrOtherGuy/firefox-csshacks/tree/master/chrome/numbered_tabs.css made available under Mozilla Public License v. 2.0
+See the above repository for updates as well as full license text. */
 .tabbrowser-tab:first-child{ counter-reset: nth-tab 0 } /* Change to -1 for 0-indexing */
-.tab-text::before{ content: counter(nth-tab) ": "; counter-increment: nth-tab }
+.tab-text::before{ content: counter(nth-tab) " "; counter-increment: nth-tab }
 
 
+/* AUTOHIDE BOOKMARKS TOOLBAR BEHAVIOR */
+/* Source file https://github.com/MrOtherGuy/firefox-csshacks/tree/master/chrome/autohide_bookmarks_toolbar.css made available under Mozilla Public License v. 2.0 */
 #PersonalToolbar{
   --uc-bm-height: 20px; /* Might need to adjust if the toolbar has other buttons */
   --uc-bm-padding: 4px; /* Vertical padding to be applied to bookmarks */
-  --uc-autohide-toolbar-delay: 100ms; /* The toolbar is hidden after 0.6s */
+  --uc-autohide-toolbar-delay: 300ms; /* The toolbar is hidden after 0.3s */
+  
+  /* 0deg = "show" ; 90deg = "hide" ;  Set the following to control when bookmarks are shown */
+  --uc-autohide-toolbar-focus-rotation: 0deg; /* urlbar is focused */
+  --uc-autohide-toolbar-hover-rotation: 0deg; /* cursor is over the toolbar area */
 }
 
-:root[uidensity="compact"] #PersonalToolbar{ --uc-bm-padding: 1px }
 :root[uidensity="touch"] #PersonalToolbar{ --uc-bm-padding: 7px }
 
 #PersonalToolbar:not([customizing]){
   position: relative;
-  margin-bottom: calc(0px - var(--uc-bm-height) - 2 * var(--uc-bm-padding));
+  margin-bottom: calc(-1px - var(--uc-bm-height) - 2 * var(--uc-bm-padding));
   transform: rotateX(90deg);
   transform-origin: top;
   transition: transform 135ms linear var(--uc-autohide-toolbar-delay) !important;
-  z-index: 3 !important; /* Increased z-index */
+  z-index: 1;
+  /* The following properties should allow the themes with trasparent toolbars to work */
+  background-color: transparent !important;
+  background-repeat: no-repeat,no-repeat,var(--lwt-background-tiling);
+    /* y position will be wrong if menubar is enabled... */
+  --uc-bg-y: calc(-2 * (var(--tab-block-margin) + var(--toolbarbutton-inner-padding) + var(--toolbarbutton-outer-padding)) - var(--tab-min-height) - 24px - var(--bookmark-block-padding));
+  background-position: top left,top left,var(--lwt-background-alignment,top left);
+  background-position-y:top,top,var(--uc-bg-y),var(--uc-bg-y),var(--uc-bg-y);
+  background-image: var(--toolbar-bgimage,linear-gradient(transparent,transparent)), linear-gradient(var(--toolbar-bgcolor),var(--toolbar-bgcolor)),var(--lwt-header-image,var(--lwt-additional-images)) !important;
+}
+@media (-moz-bool-pref: "sidebar.verticalTabs"), -moz-pref("sidebar.verticalTabs"){
+  #PersonalToolbar{
+    --toolbar-bgcolor: transparent;
+  }
+  #PersonalToolbar:not([customizing]){
+    background-color: inherit !important;
+    margin-bottom: calc(0px - var(--uc-bm-height) - 2 * var(--uc-bm-padding));
+    --uc-bg-y: calc(0px - (2 * var(--toolbarbutton-inner-padding) + var(--toolbarbutton-outer-padding)) - 27px - var(--bookmark-block-padding));
+  }
+}
+:root[uidensity="compact"] #PersonalToolbar{
+  --toolbarbutton-outer-padding: 1px !important;
+}
+#PlacesToolbarItems > .bookmark-item,
+#OtherBookmarks,
+#PersonalToolbar > #import-button{
+  padding-block: var(--uc-bm-padding) !important;
 }
 
-/* Ensure bookmark toolbar appears above content */
-#main-window:not([customizing]) #navigator-toolbox {
-  position: relative;
-  z-index: 4 !important;
-}
-
-#PlacesToolbarItems > .bookmark-item{ padding-block: var(--uc-bm-padding) !important; }
-
-/* AUTOHIDE BOOKMARKS TOOLBAR BEHAVIOR */
-
-/* Show when urlbar is focused */
 #nav-bar:focus-within + #PersonalToolbar{
-  transition-delay: 1ms !important;
-  transform: rotateX(0);
+  transition-delay: 100ms !important;
+  transform: rotateX(var(--uc-autohide-toolbar-focus-rotation,0));
 }
-
-/* Show when cursor is over the toolbar area */
+#navigator-toolbox:is(:hover,:focus-within){
+  border-bottom-color: transparent !important;
+}
 #navigator-toolbox:hover > #PersonalToolbar{
-  transition-delay: 1ms !important;
+  transition-delay: 100ms !important;
+  transform: rotateX(var(--uc-autohide-toolbar-hover-rotation,0));
+}
+
+#navigator-toolbox:hover > #nav-bar:focus-within + #PersonalToolbar {  
   transform: rotateX(0);
+}
+#navigator-toolbox{
+  --browser-area-z-index-toolbox: 4;
 }
 
 
-
-/* Show tabs toolbar with Alt-key. Menubar must be disabled for this to work */
-
+/* SHOW TABS TOOLBAR WITH ALT-KEY. MENUBAR MUST BE DISABLED FOR THIS TO WORK */
 /* Hide tabs when menubar is inactive and not hovered */
 #toolbar-menubar[autohide="true"][inactive="true"] + #TabsToolbar {
   visibility: collapse !important;
 }
 
-/* Keep the window controls positions when alt-key */
-#toolbar-menubar:hover {
-  height: calc(
-    var(--tab-min-height) + var(--space-above-tabbar) -
-      var(--tabs-navbar-shadow-size)
-  ) !important;
+#toolbar-menubar[autohide]:not([inactive]),
+#toolbar-menubar[autohide="true"]:not([inactive],:hover) + #TabsToolbar > .titlebar-buttonbox-container{
+  visibility: collapse !important;
 }
-
-/* Adjust maximized window padding */
-:root[tabsintitlebar][sizemode="maximized"] {
-  padding-top: 0px !important;
+#menubar-items:has([_moz-menuactive][open="true"]),
+#toolbar-menubar[autohide]:hover > #menubar-items,
+:root:not([sizemode="fullscreen"]) #titlebar:hover #toolbar-menubar[autohide][inactive] > #menubar-items{
+  visibility: visible;
+  position: absolute;
+  z-index: 1;
+  height: calc(var(--tab-min-height) + 2 * var(--tab-block-margin));
+  background-color: -moz-dialog;
+  align-items: stretch;
 }
+#main-window[sizemode="fullscreen"] #TabsToolbar{
+  visibility: visible !important;
+}
+#main-window[sizemode="fullscreen"] #toolbar-menubar > #menubar-items{
+  visibility: collapse;
+}
+#main-menubar{ height: 100%; }
